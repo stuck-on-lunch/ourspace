@@ -1,5 +1,5 @@
 import type { MetaFunction } from '@remix-run/node';
-import { useEffect, useRef, useState } from 'react';
+import { useWebSocket } from './useWebSocket';
 
 export const meta: MetaFunction = () => {
   return [
@@ -10,53 +10,14 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
 
-  const [connected, setConnected] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
-
-  const webSocketRef = useRef<WebSocket | null>(null);
-
-  const persistMessageLocally = (message: string) => [
-    setMessages((prev) => {
-      return [...prev, message];
-    }),
-  ];
-
-  const sendMessage = (message: string) => {
-    persistMessageLocally(message);
-    if (connected) {
-      webSocketRef.current?.send(message);
-    } else {
-      alert('not connected');
-    } 
-  };
-
-  useEffect(() => {
-    if (!webSocketRef.current) {
-      webSocketRef.current = new WebSocket('ws://localhost:8080');
-    }
-
-    webSocketRef.current.onopen = () => {
-      setConnected((prev) => {
-        return !prev;
-      });
-    };
-
-    webSocketRef.current.onmessage = ({ data }) => {
-      console.log({ data });
-      persistMessageLocally(data);
-    };
-
-    // return webSocketRef.current
-    //   ? webSocketRef.current.close
-    //   : undefined;
-  }, []);
+  const { messages, sendMessage } = useWebSocket();
 
   return (
     <div>
       <ul>
         {messages.map((message, index) => (
           <li key={index}>
-            {message}
+            {JSON.stringify(message)}
           </li>
         ))}
       </ul>
@@ -64,8 +25,8 @@ export default function Index() {
         noValidate 
         onSubmit={(event) => {
           event.preventDefault();
-          const message = (event.target as HTMLFormElement)[0].value;
-          sendMessage(message);
+          const message = ((event.target as HTMLFormElement)[0] as HTMLInputElement).value;
+          sendMessage(JSON.stringify({ message, roomType: 'dm', participants: ['edward', 'edward'] }));
         }}
       >
         <input name="message" />

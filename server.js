@@ -1,9 +1,8 @@
 import { createRequestHandler } from '@remix-run/express';
 import compression from 'compression';
-import { createServer } from 'node:http';
 import express from 'express';
 import morgan from 'morgan';
-import { WebSocketServer } from 'ws';
+import webSocketServer from './webSocketServer.ts';
 
 const viteDevServer =
   process.env.NODE_ENV === 'production'
@@ -22,19 +21,7 @@ const remixHandler = createRequestHandler({
 
 const app = express();
 
-const httpServer = createServer(app);
-
-const wss = new WebSocketServer({ server: httpServer });
-
-wss.on('connection', (ws) => {
-  console.log('connected');
-
-  ws.on('error', console.error);
-  ws.on('message', (data) => {
-    console.log('message', data);
-    ws.send('pong');
-  });
-});
+const httpServer = webSocketServer(app);
 
 app.use(compression());
 
